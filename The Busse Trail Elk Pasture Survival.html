@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Busse Trail: Elk Pasture Survival</title>
+  <style>
+    :root {
+      --bg-color: #0d120e;
+      --panel-bg: #141d16;
+      --border-green: #38e54d;
+      --text-main: #d8f3dc;
+      --text-amber: #ffb703;
+      --text-red: #ff4d4d;
+      --btn-bg: #1b2e1e;
+      --btn-hover: #2d4d32;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    #game-container {
+      max-width: 760px;
+      width: 100%;
+      background: var(--panel-bg);
+      border: 3px solid var(--border-green);
+      box-shadow: 0 0 20px rgba(56, 229, 77, 0.2);
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 2px dashed var(--border-green);
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: var(--border-green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      font-size: 0.85rem;
+      color: var(--text-amber);
+    }
+
+    #stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      background: #0a0f0b;
+      border: 2px solid #2b4c30;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      color: #8fb996;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-weight: bold;
+      font-size: 1.05rem;
+      margin-top: 2px;
+    }
+
+    .val-good { color: var(--border-green); }
+    .val-warn { color: var(--text-amber); }
+    .val-crit { color: var(--text-red); }
+
+    #viewport {
+      width: 100%;
+      height: 170px;
+      background: #080c09;
+      border: 2px solid var(--border-green);
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #season-badge {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      background: rgba(13, 18, 14, 0.85);
+      border: 1px solid var(--border-green);
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      color: var(--text-amber);
+    }
+
+    #narrative-box {
+      background: #0a0f0b;
+      border-left: 4px solid var(--text-amber);
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .event-log {
+      color: var(--text-amber);
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    .crisis-alert {
+      color: var(--text-red);
+      margin-top: 8px;
+      font-weight: bold;
+      background: rgba(255, 77, 77, 0.1);
+      padding: 6px;
+      border: 1px dashed var(--text-red);
+    }
+
+    .buff-notice {
+      color: var(--border-green);
+      font-size: 0.8rem;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    .btn {
+      background: var(--btn-bg);
+      color: var(--text-main);
+      border: 2px solid var(--border-green);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-align: left;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--btn-hover);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: #4a5d4e;
+    }
+
+    .btn-primary {
+      text-align: center;
+      font-weight: bold;
+      background: #234729;
+      color: #fff;
+      margin-top: 10px;
+    }
+
+    #store-section {
+      display: none;
+      border-top: 2px dashed var(--border-green);
+      padding-top: 15px;
+    }
+
+    #store-section h2 {
+      margin: 0 0 5px;
+      font-size: 1.15rem;
+      color: var(--text-amber);
+    }
+
+    .store-sub {
+      font-size: 0.85rem;
+      margin: 0 0 12px;
+      color: #a3c9a8;
+    }
+
+    .store-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .store-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .store-item {
+      background: #0a0f0b;
+      border: 1px solid #386641;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      color: var(--border-green);
+      margin-bottom: 4px;
+    }
+
+    .item-desc {
+      font-size: 0.8rem;
+      color: #b7e4c7;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .buy-btn {
+      background: #1b3a20;
+      color: #fff;
+      border: 1px solid var(--border-green);
+      padding: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .buy-btn:hover:not(:disabled) {
+      background: #2d6a4f;
+    }
+
+    .buy-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #end-screen {
+      display: none;
+      text-align: center;
+      padding: 15px 5px;
+    }
+
+    .coord-box {
+      background: #080c09;
+      border: 2px solid var(--text-amber);
+      padding: 15px;
+      margin: 15px auto;
+      max-width: 420px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--border-green);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <header>
+    <h1>The Busse Trail: Elk Pasture Survival</h1>
+    <p>Elk Pasture Wildlife Management Simulation • Elk Grove Village, IL</p>
+    <div id="header-buff" class="buff-notice" style="display:none;">★ VETERAN RANGER BUFF ACTIVE: +$40 Starting Grant & 15% Supply Discount! ★</div>
+  </header>
+
+  <div id="stats-bar">
+    <div class="stat-box">
+      <span class="stat-label">Date / Turn</span>
+      <span class="stat-value" id="stat-date">April (1/12)</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Herd Size</span>
+      <span class="stat-value val-good" id="stat-herd">14 Elk</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Health</span>
+      <span class="stat-value val-good" id="stat-health">70%</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Nutrition</span>
+      <span class="stat-value val-good" id="stat-food">70%</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Warmth/Shelter</span>
+      <span class="stat-value val-good" id="stat-warmth">70%</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Grant Funds</span>
+      <span class="stat-value val-warn" id="stat-money">$155</span>
+    </div>
+  </div>
+
+  <div id="viewport">
+    <div id="season-badge">SEASON: SPRING</div>
+    <div id="art-container"></div>
+  </div>
+
+  <div id="play-area">
+    <div id="narrative-box">
+      <div id="narrative-text"></div>
+      <div id="event-outcome" class="event-log"></div>
+      <div id="crisis-box" class="crisis-alert" style="display:none;"></div>
+    </div>
+
+    <div id="choices-container"></div>
+
+    <div id="store-section">
+      <h2>FOREST PRESERVE SUPPLY DEPOT</h2>
+      <p class="store-sub" id="store-prompt">Budget carefully—keep emergency cash in reserve while offsetting monthly decay:</p>
+      <div class="store-grid" id="store-items"></div>
+      <button class="btn btn-primary" id="next-month-btn" onclick="advanceMonth()">END TURN & ADVANCE TO NEXT MONTH >></button>
+    </div>
+  </div>
+
+  <div id="end-screen"></div>
+</div>
+
+<script>
+  const _c1 = [78, 52, 50, 176, 32, 48, 49, 46, 55, 56, 51];
+  const _c2 = [87, 56, 55, 176, 32, 53, 57, 46, 50, 51, 57];
+  function getCoords() {
+    return String.fromCharCode(..._c1) + " " + String.fromCharCode(..._c2);
+  }
+
+  // Check if player has lost before (stored in browser localStorage)
+  let hasLossRecord = localStorage.getItem("busse_ranger_failed") === "true";
+  let startingMoney = hasLossRecord ? 195 : 155; // +$40 buff on retry!
+  let priceDiscount = hasLossRecord ? 0.85 : 1.0; // 15% discount on retry!
+
+  let state = {
+    monthIndex: 0,
+    herd: 14,
+    health: 70,
+    food: 70,
+    warmth: 70,
+    money: startingMoney,
+    turnResolved: false,
+    boughtThisTurn: {}
+  };
+
+  if (hasLossRecord) {
+    document.getElementById("header-buff").style.display = "block";
+  }
+
+  const months = [
+    {
+      name: "April", season: "SPRING", stipend: 70,
+      crisis: { title: "CRISIS: Poachers cut wire fence near Route 72!", cost: 40 },
+      text: "Spring rains flood the pasture near Higgins Road. Standing water breeds hoof rot bacteria, and winter hay is depleted.",
+      choices: [
+        { label: "Turn the herd loose into the flooded north meadow for fresh shoots", effect: () => ({ food: +12, health: -16, warmth: -6, msg: "Muddy marsh water triggers severe hoof rot (-16 Health)!" }) },
+        { label: "Keep herd on the dry gravel feeding pad with strict rations", effect: () => ({ food: -6, health: +6, warmth: 0, msg: "Hooves stay dry and healthy, though rations run tight (-6 Nutrition)." }) }
+      ]
+    },
+    {
+      name: "May", season: "SPRING", stipend: 75,
+      crisis: null,
+      text: "Calving season arrives! Two calves are born, but dense swarms of ticks and biting flies emerge from Salt Creek.",
+      choices: [
+        { label: "Administer topical parasite treatment to the herd (-$40)", cost: 40, effect: () => ({ health: +10, food: +4, herd: +2, msg: "Parasites neutralized. Both calves thrive! (+2 Elk)" }) },
+        { label: "Let the herd cool off in the stagnant creek bed", effect: () => ({ health: -18, food: 0, warmth: -4, herd: +1, msg: "Stagnant water triggers tick fever across the yearlings (-18 Health, +1 Calf)." }) }
+      ]
+    },
+    {
+      name: "June", season: "SUMMER", stipend: 80,
+      crisis: { title: "CRISIS: Trail tourists feed white bread & chips to bulls!", cost: 45 },
+      text: "Weekend cyclists crowd the Busse Woods trail fence near Arlington Heights Rd, tossing junk food over the rail.",
+      choices: [
+        { label: "Focus on fence maintenance and ignore the trail crowd", effect: () => ({ health: -20, food: +6, msg: "Several elk develop ruminal acidosis from processed bread (-20 Health)!" }) },
+        { label: "Assign rangers to patrol the fence line and confiscate snacks", effect: () => ({ health: +6, food: -8, msg: "Herd stays safe from toxic snacks, though extra patrols burn energy." }) }
+      ]
+    },
+    {
+      name: "July", season: "SUMMER", stipend: 75,
+      crisis: { title: "CRISIS: Well pump failure during 96°F heatwave!", cost: 50 },
+      text: "A brutal Midwest heatwave bakes Cook County. Water troughs overheat rapidly in the afternoon sun.",
+      choices: [
+        { label: "Haul chilled water tanks from the maintenance yard (-$35)", cost: 35, effect: () => ({ health: +8, warmth: +10, food: -4, msg: "Troughs stay cool and fresh through the peak heat." }) },
+        { label: "Let the herd rely on shaded oak groves and warm creek pools", effect: () => ({ health: -18, warmth: -16, food: -10, msg: "Heat stress weakens older cows (-18 Health, -16 Comfort)." }) }
+      ]
+    },
+    {
+      name: "August", season: "SUMMER", stipend: 70,
+      crisis: null,
+      text: "Late summer drought bakes the pasture grass brown. Goldenrod and ragweed choke out the south meadow.",
+      choices: [
+        { label: "Save funds for autumn and let herd browse woody brush", effect: () => ({ food: -20, health: -10, msg: "Low-nutrient brush causes sharp weight loss (-20 Nutrition, -10 Health)." }) },
+        { label: "Mow invasive weeds and irrigate clover patch (-$40)", cost: 40, effect: () => ({ food: +16, health: +6, msg: "Clover rebounds fast, giving strong late-summer forage." }) }
+      ]
+    },
+    {
+      name: "September", season: "AUTUMN", stipend: 80,
+      crisis: { title: "CRISIS: Territorial bull sparring breaks paddock timber!", cost: 45 },
+      text: "The Autumn Rut begins! Dominant bulls bugle loudly at dawn and spar aggressively for territory.",
+      choices: [
+        { label: "Erect reinforced separation fencing (-$35)", cost: 35, effect: () => ({ health: +6, food: -6, msg: "Antler injuries prevented without draining herd energy." }) },
+        { label: "Let nature take its course in the main pasture", effect: () => ({ health: -22, food: -14, msg: "Fierce sparring leaves a bull limping and drains fat reserves (-22 Health)." }) }
+      ]
+    },
+    {
+      name: "October", season: "AUTUMN", stipend: 85,
+      crisis: { title: "CRISIS: Low-flying drone spooks herd into boundary fence!", cost: 40 },
+      text: "Peak fall foliage draws huge crowds to Busse Forest. Unauthorized hobby drones buzz low over the pasture.",
+      choices: [
+        { label: "Sound truck horns to scare the drone pilot away", effect: () => ({ health: -20, food: -12, msg: "Horns panic the herd! Two elk scrape their flanks on the fence (-20 Health)." }) },
+        { label: "Guide elk calmly into the wooded eastern sanctuary", effect: () => ({ health: +6, food: -8, warmth: +6, msg: "The herd settles safely under the oaks until airspace clears." }) }
+      ]
+    },
+    {
+      name: "November", season: "AUTUMN", stipend: 80,
+      crisis: { title: "CRISIS: Early freezing rain coats pasture in slick ice!", cost: 45 },
+      text: "Early frost kills remaining grass. Cold northwest winds sweep across the open field ahead of winter.",
+      choices: [
+        { label: "Begin heavy winter grain supplementation early (-$30)", cost: 30, effect: () => ({ food: +14, warmth: +8, health: +4, msg: "Herd builds a thick insulating fat layer before December." }) },
+        { label: "Hold off on winter rations until December 1st to save cash", effect: () => ({ food: -22, warmth: -18, msg: "Freezing nights burn vital fat reserves (-22 Nutrition, -18 Warmth)." }) }
+      ]
+    },
+    {
+      name: "December", season: "WINTER", stipend: 85,
+      crisis: { title: "CRISIS: 12-inch snowstorm damages hay shelter roof!", cost: 50 },
+      text: "A lake-effect snowstorm dumps a foot of snow on Elk Grove Village. Troughs freeze solid overnight.",
+      choices: [
+        { label: "Break ice manually twice daily with an iron bar", effect: () => ({ health: -18, food: -16, warmth: -14, msg: "Troughs refreeze between visits; dehydration sets in (-18 Health)." }) },
+        { label: "Run electric trough heaters and clear snowdrifts (-$40)", cost: 40, effect: () => ({ health: +8, food: +6, warmth: +10, msg: "Liquid water keeps digestion running smoothly in sub-freezing temps." }) }
+      ]
+    },
+    {
+      name: "January", season: "WINTER", stipend: 85,
+      crisis: { title: "CRISIS: POLAR VORTEX (-35°F windchill) hits Busse Lake!", cost: 55 },
+      text: "The deadliest week of the year arrives. Arctic winds roar across the open pasture.",
+      choices: [
+        { label: "Double straw bedding in windbreak & boost rations (-$45)", cost: 45, effect: () => ({ warmth: +14, food: -10, health: +6, msg: "The timber windbreak saves the herd during the Arctic blast!" }) },
+        { label: "Huddle in the open south field to catch weak winter sun", effect: () => ({ warmth: -32, food: -20, health: -26, msg: "Brutal windchill causes severe frostbite (-32 Warmth, -26 Health)!" }) }
+      ]
+    },
+    {
+      name: "February", season: "WINTER", stipend: 80,
+      crisis: null,
+      text: "Late winter ice storms coat the pasture in a thick crust. Bulls shed their antlers, and pregnant cows need extra minerals.",
+      choices: [
+        { label: "Rely on standard grass hay until spring thaw", effect: () => ({ health: -18, food: -18, warmth: -12, msg: "Mineral deficiency and freezing rain weaken the herd (-18 Health)." }) },
+        { label: "Distribute mineral-fortified alfalfa blocks (-$35)", cost: 35, effect: () => ({ health: +10, food: +8, warmth: -4, msg: "Cows maintain strong health despite icy conditions." }) }
+      ]
+    },
+    {
+      name: "March", season: "SPRING", stipend: 0,
+      crisis: { title: "CRISIS: Late spring slush blizzard traps yearlings!", cost: 40 },
+      text: "FINAL STRETCH: March brings erratic swings—60°F one day, wet slushy snow the next. Survive this final month to win!",
+      choices: [
+        { label: "Keep winter windbreaks up and feed warm mash", effect: () => ({ health: +8, food: -8, warmth: -6, msg: "Careful transition prevents late-winter pneumonia." }) },
+        { label: "Tear down windbreaks early to dry out pasture", effect: () => ({ health: -22, warmth: -24, msg: "A late March blizzard catches the herd exposed (-22 Health, -24 Warmth)!" }) }
+      ]
+    }
+  ];
+
+  const rawCatalog = [
+    { id: "hay", name: "Timothy Hay Bales", baseCost: 45, desc: "+17 Nutrition. Essential staple forage.", apply: () => { state.food += 17; } },
+    { id: "grain", name: "High-Protein Rut Grain", baseCost: 65, desc: "+20 Nutrition, +8 Warmth. Calorie boost.", apply: () => { state.food += 20; state.warmth += 8; } },
+    { id: "bedding", name: "Cedar Windbreak & Straw", baseCost: 55, desc: "+20 Warmth. Vital against windchills.", apply: () => { state.warmth += 20; } },
+    { id: "vet", name: "Wildlife Vet Checkup", baseCost: 70, desc: "+20 Health. Treats disease and stress.", apply: () => { state.health += 20; } },
+    { id: "mineral", name: "Salt & Selenium Licks", baseCost: 35, desc: "+10 Health, +9 Nutrition. Boosts immunity.", apply: () => { state.health += 10; state.food += 9; } },
+    { id: "heater", name: "Thermal Blanket & Fuel", baseCost: 80, desc: "+24 Warmth, +10 Health. Heavy winter protection.", apply: () => { state.warmth += 24; state.health += 10; } }
+  ];
+
+  function getStoreCatalog() {
+    return rawCatalog.map(item => ({
+      ...item,
+      cost: Math.round(item.baseCost * priceDiscount)
+    }));
+  }
+
+  function renderSeasonArt(season) {
+    const container = document.getElementById("art-container");
+    let sky = "#1b4332", ground = "#2d6a4f", tree = "#40916c", extra = "";
+
+    if (season === "SPRING") {
+      sky = "#1d3557"; ground = "#386641"; tree = "#6a994e";
+      extra = `<circle cx="90" cy="135" r="3" fill="#ffbe0b"/><circle cx="210" cy="140" r="3" fill="#ffbe0b"/><circle cx="310" cy="132" r="3" fill="#ff006e"/>`;
+    } else if (season === "SUMMER") {
+      sky = "#0077b6"; ground = "#55a630"; tree = "#2b9348";
+      extra = `<circle cx="340" cy="35" r="16" fill="#ffb703"/>`;
+    } else if (season === "AUTUMN") {
+      sky = "#3d405b"; ground = "#7f4f24"; tree = "#e07a5f";
+      extra = `<polygon points="60,40 80,100 40,100" fill="#f4a261"/><polygon points="320,35 345,105 295,105" fill="#e76f51"/>`;
+    } else if (season === "WINTER") {
+      sky = "#14213d"; ground = "#e5e5e5"; tree = "#4a5759";
+      extra = `<circle cx="50" cy="30" r="2" fill="#fff"/><circle cx="120" cy="50" r="2" fill="#fff"/><circle cx="200" cy="25" r="2" fill="#fff"/><circle cx="290" cy="45" r="2" fill="#fff"/><circle cx="350" cy="20" r="2" fill="#fff"/>`;
+    }
+
+    container.innerHTML = `
+      <svg width="400" height="160" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="115" fill="${sky}"/>
+        <rect y="115" width="400" height="45" fill="${ground}"/>
+        <polygon points="40,45 65,115 15,115" fill="${tree}"/>
+        <polygon points="340,40 370,115 310,115" fill="${tree}"/>
+        ${extra}
+        <rect x="0" y="102" width="400" height="4" fill="#6f4e37"/>
+        <rect x="0" y="112" width="400" height="4" fill="#6f4e37"/>
+        <rect x="30" y="95" width="6" height="25" fill="#5c4033"/>
+        <rect x="130" y="95" width="6" height="25" fill="#5c4033"/>
+        <rect x="250" y="95" width="6" height="25" fill="#5c4033"/>
+        <rect x="360" y="95" width="6" height="25" fill="#5c4033"/>
+        <g transform="translate(165, 72)">
+          <rect x="10" y="22" width="38" height="20" fill="#8d5b4c"/>
+          <rect x="38" y="12" width="14" height="22" fill="#4a2c2a"/>
+          <rect x="48" y="8" width="14" height="10" fill="#8d5b4c"/>
+          <rect x="12" y="42" width="4" height="18" fill="#4a2c2a"/>
+          <rect x="20" y="42" width="4" height="18" fill="#4a2c2a"/>
+          <rect x="38" y="42" width="4" height="18" fill="#4a2c2a"/>
+          <rect x="44" y="42" width="4" height="18" fill="#4a2c2a"/>
+          <path d="M50 8 L42 -6 L34 -10 M46 0 L38 -2 M52 8 L48 -8 L40 -14" stroke="#f4e285" stroke-width="2.5" fill="none"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  function clamp(val) {
+    return Math.max(0, Math.min(100, val));
+  }
+
+  function getColorClass(val) {
+    if (val >= 55) return "val-good";
+    if (val >= 30) return "val-warn";
+    return "val-crit";
+  }
+
+  function updateUI() {
+    const m = months[state.monthIndex];
+    document.getElementById("stat-date").textContent = `${m.name} (${state.monthIndex + 1}/12)`;
+    document.getElementById("season-badge").textContent = `SEASON: ${m.season}`;
+
+    const herdEl = document.getElementById("stat-herd");
+    herdEl.textContent = `${state.herd} Elk`;
+    herdEl.className = `stat-value ${state.herd >= 10 ? "val-good" : state.herd >= 5 ? "val-warn" : "val-crit"}`;
+
+    const healthEl = document.getElementById("stat-health");
+    healthEl.textContent = `${state.health}%`;
+    healthEl.className = `stat-value ${getColorClass(state.health)}`;
+
+    const foodEl = document.getElementById("stat-food");
+    foodEl.textContent = `${state.food}%`;
+    foodEl.className = `stat-value ${getColorClass(state.food)}`;
+
+    const warmthEl = document.getElementById("stat-warmth");
+    warmthEl.textContent = `${state.warmth}%`;
+    warmthEl.className = `stat-value ${getColorClass(state.warmth)}`;
+
+    document.getElementById("stat-money").textContent = `$${state.money}`;
+  }
+
+  function loadTurn() {
+    state.turnResolved = false;
+    state.boughtThisTurn = {};
+    const m = months[state.monthIndex];
+    renderSeasonArt(m.season);
+    updateUI();
+
+    document.getElementById("narrative-text").textContent = m.text;
+    document.getElementById("event-outcome").textContent = "";
+    document.getElementById("crisis-box").style.display = "none";
+    document.getElementById("store-section").style.display = "none";
+
+    const choicesDiv = document.getElementById("choices-container");
+    choicesDiv.innerHTML = "";
+
+    m.choices.forEach(choice => {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = `> ${choice.label}`;
+      if (choice.cost && state.money < choice.cost) {
+        btn.disabled = true;
+        btn.textContent += " [INSUFFICIENT FUNDS]";
+      }
+      btn.onclick = () => resolveChoice(choice);
+      choicesDiv.appendChild(btn);
+    });
+  }
+
+  function resolveChoice(choice) {
+    if (state.turnResolved) return;
+    state.turnResolved = true;
+
+    if (choice.cost) state.money -= choice.cost;
+    const res = choice.effect();
+
+    const m = months[state.monthIndex];
+    let decayFood = m.season === "WINTER" ? -16 : -12;
+    let decayWarmth = m.season === "WINTER" ? -18 : (m.season === "AUTUMN" ? -9 : -5);
+    let decayHealth = -7;
+
+    state.health = clamp(state.health + (res.health || 0) + decayHealth);
+    state.food = clamp(state.food + (res.food || 0) + decayFood);
+    state.warmth = clamp(state.warmth + (res.warmth || 0) + decayWarmth);
+    state.money += (res.money || 0);
+    if (res.herd) state.herd += res.herd;
+
+    const crisisBox = document.getElementById("crisis-box");
+    if (m.crisis) {
+      if (state.money >= m.crisis.cost) {
+        state.money -= m.crisis.cost;
+        crisisBox.textContent = `${m.crisis.title} Paid $${m.crisis.cost} emergency fee to resolve safely.`;
+      } else {
+        state.health = clamp(state.health - 18);
+        state.herd = Math.max(0, state.herd - 2);
+        crisisBox.textContent = `${m.crisis.title} SHORT ON CASH! Crisis caused severe damage (-18 Health, -2 Elk)!`;
+      }
+      crisisBox.style.display = "block";
+    } else {
+      crisisBox.style.display = "none";
+    }
+
+    let casualtyMsg = "";
+    if (state.health < 30 || state.food < 28 || state.warmth < 28) {
+      const lost = Math.floor(Math.random() * 2) + 1;
+      state.herd = Math.max(0, state.herd - lost);
+      casualtyMsg = ` WARNING: Critical stats caused ${lost} elk to perish!`;
+    }
+
+    document.getElementById("choices-container").innerHTML = "";
+    document.getElementById("event-outcome").textContent = res.msg + casualtyMsg;
+    updateUI();
+
+    if (checkGameOver()) return;
+
+    if (state.monthIndex === months.length - 1) {
+      setTimeout(triggerVictory, 1500);
+      return;
+    }
+
+    state.money += m.stipend;
+    updateUI();
+    openStore(m.stipend);
+  }
+
+  function openStore(stipend) {
+    const storeSec = document.getElementById("store-section");
+    storeSec.style.display = "block";
+    document.getElementById("store-prompt").textContent =
+      `District Grant Received (+$${stipend}). Buy supplies to offset monthly decay—keep emergency cash in reserve:`;
+
+    renderStoreItems();
+  }
+
+  function renderStoreItems() {
+    const grid = document.getElementById("store-items");
+    grid.innerHTML = "";
+
+    getStoreCatalog().forEach(item => {
+      const alreadyBought = !!state.boughtThisTurn[item.id];
+      const canAfford = state.money >= item.cost;
+
+      const card = document.createElement("div");
+      card.className = "store-item";
+      card.innerHTML = `
+        <div>
+          <div class="item-header">
+            <span>${item.name}</span>
+            <span>$${item.cost}</span>
+          </div>
+          <div class="item-desc">${item.desc}</div>
+        </div>
+        <button class="buy-btn" ${alreadyBought || !canAfford ? "disabled" : ""}>
+          ${alreadyBought ? "PURCHASED" : canAfford ? "BUY SUPPLY" : "NOT ENOUGH FUNDS"}
+        </button>
+      `;
+
+      card.querySelector("button").onclick = () => {
+        if (state.money >= item.cost && !state.boughtThisTurn[item.id]) {
+          state.money -= item.cost;
+          state.boughtThisTurn[item.id] = true;
+          item.apply();
+          state.health = clamp(state.health);
+          state.food = clamp(state.food);
+          state.warmth = clamp(state.warmth);
+          updateUI();
+          renderStoreItems();
+        }
+      };
+
+      grid.appendChild(card);
+    });
+  }
+
+  function advanceMonth() {
+    state.monthIndex++;
+    loadTurn();
+  }
+
+  function checkGameOver() {
+    let reason = "";
+    if (state.herd <= 0) reason = "The entire Busse Forest elk herd has perished.";
+    else if (state.health <= 0) reason = "Herd Health hit 0% due to unmanaged disease and stress.";
+    else if (state.food <= 0) reason = "Nutrition hit 0%. The herd starved.";
+    else if (state.warmth <= 0) reason = "Warmth hit 0%. The herd succumbed to winter exposure.";
+
+    if (reason) {
+      // Set failure flag so the next retry gets the helpful Veteran Ranger buff!
+      localStorage.setItem("busse_ranger_failed", "true");
+
+      document.getElementById("play-area").style.display = "none";
+      const endDiv = document.getElementById("end-screen");
+      endDiv.style.display = "block";
+      endDiv.innerHTML = `
+        <h2 style="color: var(--text-red);">HERD LOST — SIMULATION FAILED</h2>
+        <p>${reason}</p>
+        <p style="color: #8fb996;">You survived ${state.monthIndex + 1} of 12 months.<br><br>★ <strong>District Chief Note:</strong> Your failure has been logged. On your next attempt, the Forest Preserve has approved a <strong>+$40 Starting Grant</strong> and a <strong>15% Supply Discount</strong> to help you succeed!</p>
+        <button class="btn btn-primary" onclick="restartGame()">TRY AGAIN (VETERAN BUFF UNLOCKED)</button>
+      `;
+      return true;
+    }
+    return false;
+  }
+
+  function triggerVictory() {
+    // Clear failure flag on victory if you want, or keep it
+    document.getElementById("play-area").style.display = "none";
+    const endDiv = document.getElementById("end-screen");
+    endDiv.style.display = "block";
+    endDiv.innerHTML = `
+      <h2 style="color: var(--border-green);">CONGRATULATIONS, WILDLIFE RANGER!</h2>
+      <p>You successfully guided <strong>${state.herd} Elk</strong> through all four Illinois seasons at Busse Forest Elk Pasture!</p>
+      <p>Your final cache coordinates are:</p>
+      <div class="coord-box">${getCoords()}</div>
+      <p style="font-size: 0.85rem; color: #8fb996;">Please re-hide the container carefully and watch for trail muggles!</p>
+      <button class="btn btn-primary" onclick="restartGame()">PLAY AGAIN</button>
+    `;
+  }
+
+  function restartGame() {
+    // Re-check localStorage for buff state on restart
+    hasLossRecord = localStorage.getItem("busse_ranger_failed") === "true";
+    startingMoney = hasLossRecord ? 195 : 155;
+    priceDiscount = hasLossRecord ? 0.85 : 1.0;
+
+    if (hasLossRecord) {
+      document.getElementById("header-buff").style.display = "block";
+    }
+
+    state = {
+      monthIndex: 0,
+      herd: 14,
+      health: 70,
+      food: 70,
+      warmth: 70,
+      money: startingMoney,
+      turnResolved: false,
+      boughtThisTurn: {}
+    };
+    document.getElementById("end-screen").style.display = "none";
+    document.getElementById("play-area").style.display = "block";
+    loadTurn();
+  }
+
+  loadTurn();
+</script>
+</body>
+</html>
